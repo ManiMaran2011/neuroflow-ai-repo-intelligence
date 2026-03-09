@@ -1,39 +1,74 @@
+import OpenAI from "openai";
+
 export async function skillExtractor(repoData){
 
-const skills = new Set();
+const openai = new OpenAI({
+apiKey: process.env.OPENAI_API_KEY
+});
 
-for(const file of repoData.files){
+const codeContext = repoData.files
+.map(f => `File: ${f.path}\n${f.content}`)
+.join("\n\n");
 
-const code = file.content.toLowerCase();
+try{
 
-if(file.path.endsWith(".py")) skills.add("Python");
-if(file.path.endsWith(".js")) skills.add("JavaScript");
-if(file.path.endsWith(".ts")) skills.add("TypeScript");
+const response = await openai.responses.create({
+model:"gpt-4.1-mini",
+input:`
+You are an expert software engineer.
 
-if(code.includes("fastapi")) skills.add("FastAPI");
-if(code.includes("flask")) skills.add("Flask");
-if(code.includes("django")) skills.add("Django");
+Analyze this GitHub repository code and identify the main developer technologies and skills used.
 
-if(code.includes("openai")) skills.add("OpenAI API");
-if(code.includes("langchain")) skills.add("LangChain");
+Codebase:
+${codeContext}
 
-if(code.includes("async")) skills.add("Async Programming");
+Return JSON in this format:
 
-if(code.includes("telegram")) skills.add("Telegram API");
-
-if(code.includes("google")) skills.add("Google APIs");
-
-if(code.includes("agent")) skills.add("Agent Architecture");
-
+{
+"skills":[]
 }
 
-if(skills.size === 0){
+The skills should include:
 
-skills.add("Software Development");
-skills.add("Backend Development");
+programming languages  
+frameworks  
+AI/ML tools  
+APIs  
+architectural concepts  
 
+Example:
+
+{
+"skills":[
+"Python",
+"FastAPI",
+"Async Programming",
+"Google APIs",
+"Telegram Bot API",
+"Agent Architecture"
+]
+}
+`
+});
+
+const text = response.output_text;
+
+const parsed = JSON.parse(text);
+
+if(parsed.skills && parsed.skills.length > 0){
+return parsed.skills;
 }
 
-return Array.from(skills);
+}catch(e){
+console.log("Skill extraction error:",e);
+}
+
+/* fallback */
+
+return [
+"Software Development",
+"Backend Development",
+"API Development"
+];
 
 }
