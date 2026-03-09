@@ -1,32 +1,19 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-apiKey:process.env.OPENAI_API_KEY
-});
-
 export async function skillExtractor(repoData){
+
+const openai = new OpenAI({
+apiKey: process.env.OPENAI_API_KEY
+});
 
 const code = repoData.files
 .map(f => f.content)
 .join("\n");
 
 const prompt = `
-Analyze the following code samples.
-
-Extract developer skills.
+Extract developer skills from this code.
 
 Return JSON array.
-
-Example:
-
-[
-"Python",
-"FastAPI",
-"LangChain",
-"Vector Databases",
-"RAG",
-"Machine Learning"
-]
 
 Code:
 ${code}

@@ -1,25 +1,19 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-apiKey:process.env.OPENAI_API_KEY
-});
-
 export async function portfolioScorer(repoData,analysis,skills){
 
+const openai = new OpenAI({
+apiKey: process.env.OPENAI_API_KEY
+});
+
 const prompt = `
-Evaluate this developer project.
-
-Project:
-${repoData.name}
-
-Purpose:
-${analysis.purpose}
-
-Architecture:
-${analysis.architecture_complexity}
+Evaluate this developer portfolio.
 
 Skills:
 ${skills.join(", ")}
+
+Project complexity:
+${analysis.architecture_complexity}
 
 Return JSON:
 
@@ -40,13 +34,11 @@ const text = response.output_text;
 try{
 return JSON.parse(text);
 }catch{
-
-return{
+return {
 difficulty_level:"Intermediate",
 recommended_roles:[],
 improvement_suggestions:[]
 };
-
 }
 
 }
