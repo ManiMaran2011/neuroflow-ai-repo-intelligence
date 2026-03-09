@@ -4,58 +4,35 @@ import { useState, useEffect } from "react";
 
 export default function Home(){
 
-const [repoUrl,setRepoUrl] = useState("");
-const [result,setResult] = useState(null);
+const [repo,setRepo] = useState("");
 const [loading,setLoading] = useState(false);
-const [steps,setSteps] = useState([]);
+const [status,setStatus] = useState("");
+const [result,setResult] = useState(null);
 
-const agentSteps = [
-"🧠 Planner Agent planning analysis...",
-"📦 Fetching GitHub repository...",
-"🔍 Reading repository files...",
-"⚙️ Extracting technologies...",
-"🧠 AI analyzing architecture...",
-"📊 Evaluating developer portfolio...",
-"✅ Analysis complete"
-];
+async function analyzeRepo(){
 
-async function evaluateRepo(){
-
-if(!repoUrl) return;
+if(!repo) return;
 
 setLoading(true);
 setResult(null);
-setSteps([]);
 
-for(let i=0;i<agentSteps.length;i++){
+setStatus("🧠 Planner Agent thinking...");
 
-await new Promise(r => setTimeout(r,700));
-
-setSteps(prev => [...prev,agentSteps[i]]);
-
-}
-
-try{
+setTimeout(()=>setStatus("🔍 Fetching repository files..."),1000);
+setTimeout(()=>setStatus("⚙️ Extracting technologies..."),2000);
+setTimeout(()=>setStatus("📊 Evaluating architecture..."),3000);
 
 const res = await fetch("/api/evaluate",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({repo:repoUrl})
+headers:{ "Content-Type":"application/json"},
+body:JSON.stringify({repo})
 });
 
 const data = await res.json();
 
 setResult(data);
-
-}catch(err){
-
-console.log(err);
-
-}
-
 setLoading(false);
+setStatus("✅ Analysis complete");
 
 }
 
@@ -65,28 +42,24 @@ return(
 
 <NeuralParticles/>
 
-<div className="max-w-6xl mx-auto p-10">
+<div className="max-w-6xl mx-auto p-10 relative z-10">
 
-<h1 className="text-4xl font-bold text-cyan-400 mb-2">
-Neuroflow AI
+<h1 className="text-4xl font-bold mb-6 text-cyan-400">
+Neuroflow Repo Analyzer
 </h1>
 
-<p className="text-gray-400 mb-10">
-AI Powered GitHub Repository Intelligence
-</p>
-
-<div className="flex gap-4 mb-12">
+<div className="flex gap-4 mb-8">
 
 <input
-className="flex-1 p-4 bg-black/40 border border-cyan-500/40 rounded-lg"
-placeholder="Paste GitHub repository URL"
-value={repoUrl}
-onChange={(e)=>setRepoUrl(e.target.value)}
+value={repo}
+onChange={(e)=>setRepo(e.target.value)}
+placeholder="Paste GitHub repository URL..."
+className="flex-1 p-3 bg-gray-900 border border-cyan-500 rounded"
 />
 
 <button
-onClick={evaluateRepo}
-className="bg-cyan-500 text-black px-6 py-4 rounded-lg font-semibold hover:bg-cyan-400"
+onClick={analyzeRepo}
+className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black rounded font-semibold"
 >
 Analyze
 </button>
@@ -94,125 +67,95 @@ Analyze
 </div>
 
 {loading && (
-
-<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6 mb-10">
-
-<h3 className="text-cyan-400 mb-4">
-AI Agent Reasoning
-</h3>
-
-<div className="space-y-2 text-sm">
-
-{steps.map((step,index)=>(
-<div key={index} className="animate-pulse text-cyan-200">
-{step}
-</div>
-))}
-
-</div>
-
-</div>
-
+<>
+<div className="mb-4 text-cyan-300">{status}</div>
+<AgentGraph/>
+</>
 )}
 
 {result && (
 
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-{/* PROJECT ANALYSIS */}
+<Card title="AI Project Analysis">
 
-<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6">
+<p><b>Purpose:</b> {result.analysis?.purpose}</p>
+<p><b>System Type:</b> {result.analysis?.system_type}</p>
+<p><b>Complexity:</b> {result.analysis?.architecture_complexity}</p>
 
-<h3 className="text-cyan-400 mb-4">
-AI Project Analysis
-</h3>
+</Card>
 
-<p className="text-sm mb-2">
-<b>Purpose:</b>
-<br/>
-{result.analysis?.purpose || "Software Project"}
-</p>
+<Card title="Technologies & Skills">
 
-<p className="text-sm mb-2">
-<b>Project Category:</b>
-<br/>
-{result.analysis?.project_category || result.analysis?.system_type}
-</p>
+{result.skills?.length>0 ?(
 
-<p className="text-sm">
-<b>Architecture Complexity:</b>
-<br/>
-{result.analysis?.architecture_complexity || "Moderate"}
-</p>
-
-</div>
-
-{/* SKILLS */}
-
-<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6">
-
-<h3 className="text-cyan-400 mb-4">
-Technologies & Skills
-</h3>
-
-<div className="flex flex-wrap gap-2">
-
-{result.skills && result.skills.length > 0 ? (
-
-result.skills.map((skill,index)=>(
-<span
-key={index}
-className="px-3 py-1 text-xs bg-cyan-500/20 border border-cyan-500/40 rounded-full"
->
-{skill}
-</span>
-))
+<ul>
+{result.skills.map((s,i)=>(
+<li key={i}>{s}</li>
+))}
+</ul>
 
 ):(
 
-<span className="text-gray-400 text-sm">
-No skills detected
-</span>
+<p>No technologies detected</p>
 
 )}
 
-</div>
+</Card>
 
-</div>
+<Card title="Repository Architecture">
 
-{/* REPO INSIGHTS */}
+{result.analysis?.core_modules?.length>0 ?(
 
-<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6">
-
-<h3 className="text-cyan-400 mb-4">
-Repository Insights
-</h3>
-
-<p className="text-sm mb-3">
-<b>Difficulty Level:</b>
-<br/>
-{result.score?.difficulty_level || "Intermediate"}
-</p>
-
-<p className="text-sm">
-<b>Suggested Roles:</b>
-</p>
-
-<ul className="list-disc ml-4 text-sm">
-
-{result.score?.recommended_roles?.map((role,index)=>(
-<li key={index}>{role}</li>
+<ul>
+{result.analysis.core_modules.map((m,i)=>(
+<li key={i}>{m}</li>
 ))}
-
 </ul>
 
-</div>
+):(
+
+<p>No modules detected</p>
+
+)}
+
+</Card>
+
+<Card title="Developer Insights">
+
+<p><b>Difficulty:</b> {result.score?.difficulty_level}</p>
+
+<ul>
+{result.score?.recommended_roles?.map((r,i)=>(
+<li key={i}>{r}</li>
+))}
+</ul>
+
+</Card>
 
 </div>
 
 )}
 
 </div>
+
+</div>
+
+);
+
+}
+
+function Card({title,children}){
+
+return(
+
+<div className="bg-gray-900/60 backdrop-blur border border-cyan-500 p-6 rounded-lg shadow-lg">
+
+<h2 className="text-xl font-semibold mb-4 text-cyan-400">
+{title}
+</h2>
+
+{children}
 
 </div>
 
@@ -237,9 +180,10 @@ setParticles(p);
 
 return(
 
-<div className="absolute inset-0 overflow-hidden">
+<div className="absolute inset-0 overflow-hidden pointer-events-none">
 
 {particles.map((p,i)=>(
+
 <div
 key={i}
 className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-40"
@@ -248,9 +192,116 @@ left:`${p.x}%`,
 top:`${p.y}%`
 }}
 />
+
 ))}
 
 </div>
+
+);
+
+}
+
+function AgentGraph(){
+
+const nodes = [
+{ id:"planner",x:50,y:10,label:"Planner"},
+{ id:"repo",x:20,y:50,label:"Repo Agent"},
+{ id:"code",x:80,y:50,label:"Code Agent"},
+{ id:"skill",x:35,y:85,label:"Skill Agent"},
+{ id:"score",x:65,y:85,label:"Score Agent"}
+];
+
+const edges = [
+["planner","repo"],
+["planner","code"],
+["repo","skill"],
+["code","skill"],
+["skill","score"]
+];
+
+return(
+
+<div className="relative h-64 border border-cyan-500 rounded mb-6 bg-black/40">
+
+<svg className="absolute inset-0 w-full h-full">
+
+{edges.map((e,i)=>{
+
+const a = nodes.find(n=>n.id===e[0]);
+const b = nodes.find(n=>n.id===e[1]);
+
+return(
+
+<g key={i}>
+
+<line
+x1={`${a.x}%`}
+y1={`${a.y}%`}
+x2={`${b.x}%`}
+y2={`${b.y}%`}
+stroke="cyan"
+strokeOpacity="0.25"
+/>
+
+<DataPacket a={a} b={b}/>
+
+</g>
+
+);
+
+})}
+
+</svg>
+
+{nodes.map((n,i)=>(
+
+<div
+key={i}
+className="absolute bg-cyan-500 text-black text-xs px-2 py-1 rounded animate-pulse"
+style={{
+left:`${n.x}%`,
+top:`${n.y}%`,
+transform:"translate(-50%,-50%)"
+}}
+>
+{n.label}
+</div>
+
+))}
+
+</div>
+
+);
+
+}
+
+function DataPacket({a,b}){
+
+const [t,setT] = useState(0);
+
+useEffect(()=>{
+
+const interval = setInterval(()=>{
+
+setT(v=> (v+0.02)%1);
+
+},50);
+
+return ()=>clearInterval(interval);
+
+},[]);
+
+const x = a.x + (b.x-a.x)*t;
+const y = a.y + (b.y-a.y)*t;
+
+return(
+
+<circle
+cx={`${x}%`}
+cy={`${y}%`}
+r="3"
+fill="cyan"
+/>
 
 );
 
