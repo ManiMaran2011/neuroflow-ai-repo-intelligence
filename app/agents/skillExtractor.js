@@ -9,12 +9,9 @@ apiKey: process.env.OPENAI_API_KEY
 const code = repoData.files.map(f=>f.content).join("\n");
 
 const prompt = `
-Extract developer skills from this code.
+Extract developer skills.
 
-Return ONLY JSON array.
-
-Example:
-["Python","LangChain","Vector Databases"]
+Return JSON array.
 
 Code:
 ${code}
@@ -25,16 +22,12 @@ model:"gpt-4.1-mini",
 input:prompt
 });
 
-const text = response.output_text || "";
+const text = response.output?.[0]?.content?.[0]?.text || "";
 
-const jsonMatch = text.match(/\[[\s\S]*\]/);
-
-if(jsonMatch){
 try{
-return JSON.parse(jsonMatch[0]);
-}catch{}
-}
-
+return JSON.parse(text);
+}catch{
 return [];
+}
 
 }

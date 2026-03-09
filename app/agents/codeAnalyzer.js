@@ -15,13 +15,13 @@ Analyze this repository.
 
 ${code}
 
-Return ONLY valid JSON.
+Return JSON:
 
 {
-"purpose":"string",
-"system_type":"string",
-"architecture_complexity":"string",
-"core_modules":["string"]
+"purpose":"",
+"system_type":"",
+"architecture_complexity":"",
+"core_modules":[]
 }
 `;
 
@@ -30,21 +30,17 @@ model:"gpt-4.1-mini",
 input:prompt
 });
 
-const text = response.output_text || "";
+const text = response.output?.[0]?.content?.[0]?.text || "";
 
-const jsonMatch = text.match(/\{[\s\S]*\}/);
-
-if(jsonMatch){
 try{
-return JSON.parse(jsonMatch[0]);
-}catch{}
-}
-
+return JSON.parse(text);
+}catch{
 return {
-purpose:"AI Software System",
-system_type:"Modular Application",
+purpose:"Software Project",
+system_type:"Application",
 architecture_complexity:"Intermediate",
 core_modules:[]
 };
+}
 
 }
