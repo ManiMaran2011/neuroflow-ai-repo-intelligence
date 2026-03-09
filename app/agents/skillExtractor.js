@@ -1,82 +1,41 @@
-import OpenAI from "openai";
-
 export async function skillExtractor(repoData){
 
-const openai = new OpenAI({
-apiKey:process.env.OPENAI_API_KEY
-});
+const skills = new Set();
 
-const repoTree = repoData.files
-.map(f=>f.path)
-.join("\n");
+repoData.files.forEach(file => {
 
-const codeContext = repoData.files
-.map(f=>f.content.slice(0,600))
-.join("\n");
+const path = file.path.toLowerCase();
+const code = file.content.toLowerCase();
 
-try{
+/* language detection */
 
-const response = await openai.responses.create({
-model:"gpt-4.1-mini",
-input:`
-Analyze this GitHub repository and list technologies and developer skills.
+if(path.endsWith(".py")) skills.add("Python");
+if(path.endsWith(".js")) skills.add("JavaScript");
+if(path.endsWith(".ts")) skills.add("TypeScript");
 
-Repository structure:
-${repoTree}
+/* framework detection */
 
-Code:
-${codeContext}
+if(code.includes("openai")) skills.add("OpenAI API");
+if(code.includes("requests")) skills.add("HTTP APIs");
+if(code.includes("googleapiclient")) skills.add("Google APIs");
+if(code.includes("telegram")) skills.add("Telegram Bot API");
 
-Return a comma separated list.
+/* architecture detection */
 
-Example:
-Python, FastAPI, REST APIs, OpenAI API
-`
-});
-
-const text = response.output_text || "";
-
-const skills = text
-.split(/[\n,]/)
-.map(s=>s.trim())
-.filter(Boolean);
-
-if(skills.length > 0){
-
-return [...new Set(skills)].slice(0,10);
-
-}
-
-}catch(err){
-
-console.log("Skill extractor error:",err);
-
-}
-
-/* fallback detection */
-
-const fallback = [];
-
-repoData.files.forEach(f=>{
-
-const path = f.path.toLowerCase();
-const code = f.content.toLowerCase();
-
-if(path.endsWith(".py")) fallback.push("Python");
-if(path.endsWith(".js")) fallback.push("JavaScript");
-
-if(code.includes("openai")) fallback.push("OpenAI API");
-if(code.includes("telegram")) fallback.push("Telegram API");
-if(code.includes("googleapiclient")) fallback.push("Google APIs");
+if(code.includes("baseagent")) skills.add("Agent Architecture");
+if(code.includes("async")) skills.add("Async Programming");
+if(code.includes("registry")) skills.add("Plugin Architecture");
 
 });
 
-if(fallback.length === 0){
+/* fallback */
 
-fallback.push("Software Development");
+if(skills.size === 0){
+
+skills.add("Software Development");
 
 }
 
-return [...new Set(fallback)];
+return Array.from(skills).slice(0,10);
 
 }

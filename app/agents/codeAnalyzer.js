@@ -6,17 +6,27 @@ const openai = new OpenAI({
 apiKey: process.env.OPENAI_API_KEY
 });
 
-/* build repo tree */
+/* detect modules from repo structure */
 
-const repoTree = repoData.files
-.map(f => f.path)
-.join("\n");
+const modules = repoData.files.map(file => {
 
-/* include code snippets */
+const parts = file.path.split("/");
 
-const codeContext = repoData.files
-.map(f => `File: ${f.path}\n${f.content.slice(0,800)}`)
-.join("\n\n");
+if(parts.length >= 2){
+
+return parts.slice(0,2).join("/");
+
+}
+
+return file.path;
+
+});
+
+const uniqueModules = [...new Set(modules)].slice(0,6);
+
+/* build context for LLM */
+
+const repoTree = repoData.files.map(f => f.path).join("\n");
 
 try{
 
@@ -25,75 +35,58 @@ model:"gpt-4.1-mini",
 input:`
 You are a senior software architect.
 
-Analyze this GitHub repository.
+Explain this repository.
 
-Repository Structure:
+Repository structure:
 ${repoTree}
-
-Code Samples:
-${codeContext}
 
 Return JSON:
 
 {
 "purpose":"short explanation",
 "system_type":"type of system",
-"architecture_complexity":"Beginner | Intermediate | Advanced",
-"core_modules":["module descriptions"]
+"architecture_complexity":"Beginner | Intermediate | Advanced"
 }
-
-Important:
-core_modules should list important components inferred from file structure.
 `
 });
 
-const text = response.output_text || "{}";
+let text = response.output_text || "{}";
 
-let parsed = {};
+let parsed;
 
 try{
+
 parsed = JSON.parse(text);
+
 }catch{
+
 parsed = {};
-}
-
-/* fallback module detection */
-
-let modules = parsed.core_modules || [];
-
-if(modules.length === 0){
-
-modules = repoData.files.slice(0,6).map(f=>{
-return `${f.path} module`;
-});
 
 }
 
 return{
 
-purpose: parsed.purpose || "Software project",
+purpose: parsed.purpose || "Software repository",
 
-system_type: parsed.system_type || "Application",
+system_type: parsed.system_type || "Backend Application",
 
 architecture_complexity: parsed.architecture_complexity || "Intermediate",
 
-core_modules: modules
+core_modules: uniqueModules
 
 };
 
-}catch(err){
-
-console.log("Code analyzer error:",err);
+}catch(e){
 
 return{
 
-purpose:"Software project",
+purpose:"Software repository",
 
 system_type:"Application",
 
 architecture_complexity:"Intermediate",
 
-core_modules: repoData.files.slice(0,6).map(f=>f.path)
+core_modules: uniqueModules
 
 };
 
