@@ -15,12 +15,13 @@ Analyze this repository.
 
 ${code}
 
-Return JSON:
+Return ONLY valid JSON.
+
 {
-"purpose":"",
-"system_type":"",
-"architecture_complexity":"",
-"core_modules":[]
+"purpose":"string",
+"system_type":"string",
+"architecture_complexity":"string",
+"core_modules":["string"]
 }
 `;
 
@@ -29,17 +30,21 @@ model:"gpt-4.1-mini",
 input:prompt
 });
 
-const text = response.output_text;
+const text = response.output_text || "";
 
+const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+if(jsonMatch){
 try{
-return JSON.parse(text);
-}catch{
+return JSON.parse(jsonMatch[0]);
+}catch{}
+}
+
 return {
-purpose:"Software project",
-system_type:"Application",
+purpose:"AI Software System",
+system_type:"Modular Application",
 architecture_complexity:"Intermediate",
 core_modules:[]
 };
-}
 
 }

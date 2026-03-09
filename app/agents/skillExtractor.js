@@ -6,14 +6,15 @@ const openai = new OpenAI({
 apiKey: process.env.OPENAI_API_KEY
 });
 
-const code = repoData.files
-.map(f => f.content)
-.join("\n");
+const code = repoData.files.map(f=>f.content).join("\n");
 
 const prompt = `
 Extract developer skills from this code.
 
-Return JSON array.
+Return ONLY JSON array.
+
+Example:
+["Python","LangChain","Vector Databases"]
 
 Code:
 ${code}
@@ -24,12 +25,16 @@ model:"gpt-4.1-mini",
 input:prompt
 });
 
-const text = response.output_text;
+const text = response.output_text || "";
 
+const jsonMatch = text.match(/\[[\s\S]*\]/);
+
+if(jsonMatch){
 try{
-return JSON.parse(text);
-}catch{
-return [];
+return JSON.parse(jsonMatch[0]);
+}catch{}
 }
+
+return [];
 
 }

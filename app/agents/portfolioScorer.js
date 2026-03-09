@@ -15,12 +15,12 @@ ${skills.join(", ")}
 Project complexity:
 ${analysis.architecture_complexity}
 
-Return JSON:
+Return ONLY JSON:
 
 {
-"difficulty_level":"",
-"recommended_roles":[],
-"improvement_suggestions":[]
+"difficulty_level":"string",
+"recommended_roles":["string"],
+"improvement_suggestions":["string"]
 }
 `;
 
@@ -29,16 +29,20 @@ model:"gpt-4.1-mini",
 input:prompt
 });
 
-const text = response.output_text;
+const text = response.output_text || "";
 
+const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+if(jsonMatch){
 try{
-return JSON.parse(text);
-}catch{
+return JSON.parse(jsonMatch[0]);
+}catch{}
+}
+
 return {
 difficulty_level:"Intermediate",
 recommended_roles:[],
 improvement_suggestions:[]
 };
-}
 
 }
