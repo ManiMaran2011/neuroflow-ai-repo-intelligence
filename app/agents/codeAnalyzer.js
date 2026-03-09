@@ -6,28 +6,52 @@ const openai = new OpenAI({
 apiKey:process.env.OPENAI_API_KEY
 });
 
-const code = repoData.files
-.map(f => `File:${f.path}\n${f.content}`)
+const codeContext = repoData.files
+.map(f => `File: ${f.path}\n${f.content}`)
 .join("\n\n");
 
 try{
 
 const response = await openai.responses.create({
 model:"gpt-4.1-mini",
+
 input:`
-Analyze this GitHub project.
+You are an expert software architect.
+
+Analyze this GitHub repository.
+
+Repository Description:
+${repoData.description}
 
 Code:
-${code}
+${codeContext}
+
+Determine:
+
+• project purpose
+• project category
+• system architecture complexity
+• major modules/components
 
 Return JSON:
 
 {
 "purpose":"",
-"system_type":"",
+"project_category":"",
 "architecture_complexity":"",
 "modules":[]
 }
+
+Project categories can be:
+
+AI/ML System
+Backend API
+Frontend Web Application
+Full Stack Application
+Agent System
+Data Pipeline
+CLI Tool
+Dev Tool
 `
 });
 
@@ -36,17 +60,17 @@ const text = response.output_text;
 const parsed = JSON.parse(text);
 
 return{
-purpose: parsed.purpose || "Software system",
-system_type: parsed.system_type || "Application",
+purpose: parsed.purpose || "Software project",
+project_category: parsed.project_category || "Application",
 architecture_complexity: parsed.architecture_complexity || "Moderate",
 modules: parsed.modules || []
 };
 
-}catch{
+}catch(e){
 
 return{
-purpose:"Software project implementing backend logic and services",
-system_type:"Modular application",
+purpose:"Software repository implementing application logic",
+project_category:"Software Application",
 architecture_complexity:"Moderate",
 modules:[]
 };

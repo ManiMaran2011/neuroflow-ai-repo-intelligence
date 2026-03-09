@@ -1,199 +1,212 @@
 "use client";
 
-import {useState,useEffect} from "react";
-import {motion} from "framer-motion";
-import {FaBrain} from "react-icons/fa";
+import { useState, useEffect } from "react";
 
 export default function Home(){
 
-const [repo,setRepo] = useState("");
+const [repoUrl,setRepoUrl] = useState("");
 const [result,setResult] = useState(null);
-const [reasoning,setReasoning] = useState([]);
-const [activeAgent,setActiveAgent] = useState(null);
 const [loading,setLoading] = useState(false);
+const [steps,setSteps] = useState([]);
+
+const agentSteps = [
+"🧠 Planner Agent planning analysis...",
+"📦 Fetching GitHub repository...",
+"🔍 Reading repository files...",
+"⚙️ Extracting technologies...",
+"🧠 AI analyzing architecture...",
+"📊 Evaluating developer portfolio...",
+"✅ Analysis complete"
+];
 
 async function evaluateRepo(){
 
-setLoading(true);
-setReasoning([]);
-setResult(null);
+if(!repoUrl) return;
 
-await runAgent("planner","🧠 Planner Agent understanding repo");
-await runAgent("repo","🔍 Repo Analyzer fetching repo data");
-await runAgent("structure","📂 Mapping repository structure");
-await runAgent("code","⚙️ Code Analyzer studying architecture");
-await runAgent("skills","🧩 Extracting developer skills");
-await runAgent("portfolio","📊 Evaluating developer portfolio");
+setLoading(true);
+setResult(null);
+setSteps([]);
+
+for(let i=0;i<agentSteps.length;i++){
+
+await new Promise(r => setTimeout(r,700));
+
+setSteps(prev => [...prev,agentSteps[i]]);
+
+}
+
+try{
 
 const res = await fetch("/api/evaluate",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({repo})
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({repo:repoUrl})
 });
 
 const data = await res.json();
 
 setResult(data);
 
-setReasoning(r=>[
-...r,
-"✅ AI analysis complete"
-]);
+}catch(err){
 
-setActiveAgent(null);
+console.log(err);
+
+}
+
 setLoading(false);
 
 }
-
-async function runAgent(agent,text){
-
-setActiveAgent(agent);
-setReasoning(r=>[...r,text]);
-
-await delay(900);
-
-}
-
-const skills = Array.isArray(result?.skills)
-? result.skills
-: [];
 
 return(
 
 <div className="min-h-screen bg-black text-white relative overflow-hidden">
 
-<BackgroundGrid/>
+<NeuralParticles/>
 
-<div className="relative z-10 p-10">
+<div className="max-w-6xl mx-auto p-10">
 
-<header className="flex items-center gap-4 mb-10">
-
-<motion.div
-animate={{rotate:[0,10,-10,0]}}
-transition={{repeat:Infinity,duration:4}}
->
-<FaBrain className="text-cyan-400 text-5xl"/>
-</motion.div>
-
-<h1 className="text-4xl font-bold text-cyan-400">
-Neuroflow AI Repo Intelligence
+<h1 className="text-4xl font-bold text-cyan-400 mb-2">
+Neuroflow AI
 </h1>
 
-</header>
+<p className="text-gray-400 mb-10">
+AI Powered GitHub Repository Intelligence
+</p>
 
 <div className="flex gap-4 mb-12">
 
 <input
-className="bg-white/10 border border-cyan-400/30 p-3 rounded-xl w-96"
-placeholder="Paste GitHub repo URL"
-value={repo}
-onChange={(e)=>setRepo(e.target.value)}
+className="flex-1 p-4 bg-black/40 border border-cyan-500/40 rounded-lg"
+placeholder="Paste GitHub repository URL"
+value={repoUrl}
+onChange={(e)=>setRepoUrl(e.target.value)}
 />
 
 <button
 onClick={evaluateRepo}
-className="bg-cyan-500 px-6 py-3 rounded-xl hover:bg-cyan-400 transition"
+className="bg-cyan-500 text-black px-6 py-4 rounded-lg font-semibold hover:bg-cyan-400"
 >
-Analyze Repository
+Analyze
 </button>
 
 </div>
 
-{/* AGENT GRAPH */}
+{loading && (
 
-<AgentGraph activeAgent={activeAgent}/>
+<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6 mb-10">
 
-{result &&(
+<h3 className="text-cyan-400 mb-4">
+AI Agent Reasoning
+</h3>
 
-<div className="grid grid-cols-2 gap-8 mt-10">
+<div className="space-y-2 text-sm">
 
-<Card title="AI Project Analysis">
-
-<p><b>Purpose:</b> {result.analysis?.purpose}</p>
-
-<p><b>System Type:</b> {result.analysis?.system_type}</p>
-
-<p><b>Architecture:</b> {result.analysis?.architecture_complexity}</p>
-
-</Card>
-
-<Card title="Technologies & Skills">
-
-<div className="flex flex-wrap gap-2">
-
-{skills.map((skill,i)=>(
-
-<motion.span
-key={i}
-whileHover={{scale:1.1}}
-className="px-3 py-1 bg-cyan-500/20 border border-cyan-400 rounded-full text-sm"
->
-
-{skill}
-
-</motion.span>
-
+{steps.map((step,index)=>(
+<div key={index} className="animate-pulse text-cyan-200">
+{step}
+</div>
 ))}
 
 </div>
 
-</Card>
+</div>
 
-<Card title="Repository Insights">
+)}
 
-<p><b>Difficulty:</b> {result.score?.difficulty_level}</p>
+{result && (
 
-<p className="mt-3 text-cyan-400 font-semibold">
-Suggested Roles
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+{/* PROJECT ANALYSIS */}
+
+<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6">
+
+<h3 className="text-cyan-400 mb-4">
+AI Project Analysis
+</h3>
+
+<p className="text-sm mb-2">
+<b>Purpose:</b>
+<br/>
+{result.analysis?.purpose || "Software Project"}
 </p>
 
-<ul className="list-disc ml-5">
+<p className="text-sm mb-2">
+<b>Project Category:</b>
+<br/>
+{result.analysis?.project_category || result.analysis?.system_type}
+</p>
 
-{result.score?.recommended_roles?.map((r,i)=>(
-<li key={i}>{r}</li>
-))}
+<p className="text-sm">
+<b>Architecture Complexity:</b>
+<br/>
+{result.analysis?.architecture_complexity || "Moderate"}
+</p>
 
-</ul>
+</div>
 
-</Card>
+{/* SKILLS */}
 
-<Card title="Repository Architecture">
+<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6">
 
-<p>Detected Pattern: Agent Orchestrator</p>
+<h3 className="text-cyan-400 mb-4">
+Technologies & Skills
+</h3>
 
-<p className="mt-3">Modules:</p>
+<div className="flex flex-wrap gap-2">
 
-<ul className="list-disc ml-5">
+{result.skills && result.skills.length > 0 ? (
 
-{result.analysis?.core_modules?.map((m,i)=>(
-<li key={i}>{m}</li>
-))}
-
-</ul>
-
-</Card>
-
-<Card title="AI Agent Reasoning" full>
-
-<ul className="space-y-2">
-
-{reasoning.map((r,i)=>(
-
-<motion.li
-key={i}
-initial={{opacity:0,x:-20}}
-animate={{opacity:1,x:0}}
+result.skills.map((skill,index)=>(
+<span
+key={index}
+className="px-3 py-1 text-xs bg-cyan-500/20 border border-cyan-500/40 rounded-full"
 >
+{skill}
+</span>
+))
 
-{r}
+):(
 
-</motion.li>
+<span className="text-gray-400 text-sm">
+No skills detected
+</span>
 
+)}
+
+</div>
+
+</div>
+
+{/* REPO INSIGHTS */}
+
+<div className="bg-black/40 border border-cyan-500/30 rounded-xl p-6">
+
+<h3 className="text-cyan-400 mb-4">
+Repository Insights
+</h3>
+
+<p className="text-sm mb-3">
+<b>Difficulty Level:</b>
+<br/>
+{result.score?.difficulty_level || "Intermediate"}
+</p>
+
+<p className="text-sm">
+<b>Suggested Roles:</b>
+</p>
+
+<ul className="list-disc ml-4 text-sm">
+
+{result.score?.recommended_roles?.map((role,index)=>(
+<li key={index}>{role}</li>
 ))}
 
 </ul>
 
-</Card>
+</div>
 
 </div>
 
@@ -207,92 +220,38 @@ animate={{opacity:1,x:0}}
 
 }
 
-function AgentGraph({activeAgent}){
+function NeuralParticles(){
 
-const agents=[
+const [particles,setParticles] = useState([]);
 
-{id:"planner",x:50,y:50,label:"Planner"},
-{id:"repo",x:20,y:150,label:"Repo"},
-{id:"structure",x:80,y:150,label:"Structure"},
-{id:"code",x:20,y:250,label:"Code"},
-{id:"skills",x:80,y:250,label:"Skills"},
-{id:"portfolio",x:50,y:350,label:"Evaluator"}
+useEffect(()=>{
 
-];
+const p = Array.from({length:40}).map(()=>({
+x:Math.random()*100,
+y:Math.random()*100
+}));
+
+setParticles(p);
+
+},[]);
 
 return(
 
-<div className="relative w-full h-[420px] border border-cyan-400/30 rounded-xl mb-8">
+<div className="absolute inset-0 overflow-hidden">
 
-{agents.map(a=>(
-
-<motion.div
-key={a.id}
-className="absolute flex items-center justify-center w-24 h-10 rounded-lg text-sm"
-style={{left:a.x+"%",top:a.y}}
-
-animate={{
-scale:activeAgent===a.id ? 1.2 : 1,
-boxShadow:activeAgent===a.id
-? "0 0 30px cyan"
-: "0 0 10px rgba(0,255,255,0.2)"
+{particles.map((p,i)=>(
+<div
+key={i}
+className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-40"
+style={{
+left:`${p.x}%`,
+top:`${p.y}%`
 }}
-
-className="bg-cyan-500/10 border border-cyan-400 text-cyan-300 rounded-lg flex items-center justify-center w-24 h-10 absolute"
-
->
-
-{a.label}
-
-</motion.div>
-
+/>
 ))}
 
 </div>
 
 );
 
-}
-
-function Card({title,children,full}){
-
-return(
-
-<motion.div
-initial={{opacity:0,y:30}}
-animate={{opacity:1,y:0}}
-className={`bg-white/5 border border-cyan-400/30 rounded-xl p-6 ${full ? "col-span-2":""}`}
->
-
-<h2 className="text-cyan-400 mb-4 text-lg">
-{title}
-</h2>
-
-{children}
-
-</motion.div>
-
-);
-
-}
-
-function BackgroundGrid(){
-
-return(
-
-<div
-className="absolute inset-0 opacity-20"
-style={{
-backgroundImage:
-"linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)",
-backgroundSize:"40px 40px"
-}}
-/>
-
-);
-
-}
-
-function delay(ms){
-return new Promise(r=>setTimeout(r,ms));
 }
