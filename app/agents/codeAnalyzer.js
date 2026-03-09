@@ -3,76 +3,98 @@ import OpenAI from "openai";
 export async function codeAnalyzer(repoData){
 
 const openai = new OpenAI({
-apiKey:process.env.OPENAI_API_KEY
+apiKey: process.env.OPENAI_API_KEY
 });
 
+/* build repo tree */
+
+const repoTree = repoData.files
+.map(f => f.path)
+.join("\n");
+
+/* include code snippets */
+
 const codeContext = repoData.files
-.map(f => `File: ${f.path}\n${f.content}`)
+.map(f => `File: ${f.path}\n${f.content.slice(0,800)}`)
 .join("\n\n");
 
 try{
 
 const response = await openai.responses.create({
 model:"gpt-4.1-mini",
-
 input:`
-You are an expert software architect.
+You are a senior software architect.
 
 Analyze this GitHub repository.
 
-Repository Description:
-${repoData.description}
+Repository Structure:
+${repoTree}
 
-Code:
+Code Samples:
 ${codeContext}
-
-Determine:
-
-• project purpose
-• project category
-• system architecture complexity
-• major modules/components
 
 Return JSON:
 
 {
-"purpose":"",
-"project_category":"",
-"architecture_complexity":"",
-"modules":[]
+"purpose":"short explanation",
+"system_type":"type of system",
+"architecture_complexity":"Beginner | Intermediate | Advanced",
+"core_modules":["module descriptions"]
 }
 
-Project categories can be:
-
-AI/ML System
-Backend API
-Frontend Web Application
-Full Stack Application
-Agent System
-Data Pipeline
-CLI Tool
-Dev Tool
+Important:
+core_modules should list important components inferred from file structure.
 `
 });
 
-const text = response.output_text;
+const text = response.output_text || "{}";
 
-const parsed = JSON.parse(text);
+let parsed = {};
+
+try{
+parsed = JSON.parse(text);
+}catch{
+parsed = {};
+}
+
+/* fallback module detection */
+
+let modules = parsed.core_modules || [];
+
+if(modules.length === 0){
+
+modules = repoData.files.slice(0,6).map(f=>{
+return `${f.path} module`;
+});
+
+}
 
 return{
+
 purpose: parsed.purpose || "Software project",
-project_category: parsed.project_category || "Application",
-architecture_complexity: parsed.architecture_complexity || "Moderate",
-modules: parsed.modules || []
+
+system_type: parsed.system_type || "Application",
+
+architecture_complexity: parsed.architecture_complexity || "Intermediate",
+
+core_modules: modules
+
 };
 
-}catch(e){
+}catch(err){
+
+console.log("Code analyzer error:",err);
 
 return{
-purpose:"Software repository implementing application logic",
-project_category:"Software Application",
-architecture_complexity:"Moderate",
-modules:[]
+
+purpose:"Software project",
+
+system_type:"Application",
+
+architecture_complexity:"Intermediate",
+
+core_modules: repoData.files.slice(0,6).map(f=>f.path)
+
 };
 
 }
