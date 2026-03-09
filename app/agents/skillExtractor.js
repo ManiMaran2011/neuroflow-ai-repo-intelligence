@@ -1,36 +1,39 @@
-import OpenAI from "openai";
-
 export async function skillExtractor(repoData){
 
-const openai = new OpenAI({
-apiKey: process.env.OPENAI_API_KEY
-});
+const skills = new Set();
 
-const code = repoData.files.map(f => f.content).join("\n");
+for(const file of repoData.files){
 
-const response = await openai.responses.create({
-model:"gpt-4.1-mini",
+const code = file.content.toLowerCase();
 
-input:`
-List the main technologies, tools, and programming skills used in this repository.
+if(file.path.endsWith(".py")) skills.add("Python");
+if(file.path.endsWith(".js")) skills.add("JavaScript");
+if(file.path.endsWith(".ts")) skills.add("TypeScript");
 
-Return them as a simple comma separated list.
+if(code.includes("fastapi")) skills.add("FastAPI");
+if(code.includes("flask")) skills.add("Flask");
+if(code.includes("django")) skills.add("Django");
 
-Example:
-Python, FastAPI, Docker, PostgreSQL
+if(code.includes("openai")) skills.add("OpenAI API");
+if(code.includes("langchain")) skills.add("LangChain");
 
-Code:
-${code}
-`
-});
+if(code.includes("async")) skills.add("Async Programming");
 
-const text = response.output_text || "";
+if(code.includes("telegram")) skills.add("Telegram API");
 
-const skills = text
-.split(",")
-.map(s => s.trim())
-.filter(Boolean);
+if(code.includes("google")) skills.add("Google APIs");
 
-return skills;
+if(code.includes("agent")) skills.add("Agent Architecture");
+
+}
+
+if(skills.size === 0){
+
+skills.add("Software Development");
+skills.add("Backend Development");
+
+}
+
+return Array.from(skills);
 
 }

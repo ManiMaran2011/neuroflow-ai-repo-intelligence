@@ -1,44 +1,34 @@
-import OpenAI from "openai";
-
 export async function portfolioScorer(repoData,analysis,skills){
 
-const openai = new OpenAI({
-apiKey: process.env.OPENAI_API_KEY
-});
+let difficulty = "Beginner";
 
-const prompt = `
-Evaluate this developer portfolio.
+if(skills.length > 6) difficulty = "Intermediate";
+if(skills.length > 10) difficulty = "Advanced";
 
-Skills:
-${skills.join(", ")}
+const roles = [];
 
-Project complexity:
-${analysis.architecture_complexity}
+if(skills.includes("Python")) roles.push("Backend Developer");
+if(skills.includes("FastAPI")) roles.push("API Engineer");
+if(skills.includes("OpenAI API")) roles.push("AI Engineer");
+if(skills.includes("LangChain")) roles.push("LLM Engineer");
 
-Return JSON:
+if(roles.length === 0){
 
-{
-"difficulty_level":"",
-"recommended_roles":[],
-"improvement_suggestions":[]
+roles.push("Software Engineer");
+roles.push("Backend Developer");
+
 }
-`;
 
-const response = await openai.responses.create({
-model:"gpt-4.1-mini",
-input:prompt
-});
+return{
 
-const text = response.output?.[0]?.content?.[0]?.text || "";
+difficulty_level:difficulty,
+recommended_roles:roles,
+improvement_suggestions:[
+"Add more documentation",
+"Include tests",
+"Improve README with architecture diagram"
+]
 
-try{
-return JSON.parse(text);
-}catch{
-return {
-difficulty_level:"Intermediate",
-recommended_roles:[],
-improvement_suggestions:[]
 };
-}
 
 }

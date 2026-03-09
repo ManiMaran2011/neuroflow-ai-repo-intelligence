@@ -3,16 +3,21 @@ import OpenAI from "openai";
 export async function codeAnalyzer(repoData){
 
 const openai = new OpenAI({
-apiKey: process.env.OPENAI_API_KEY
+apiKey:process.env.OPENAI_API_KEY
 });
 
 const code = repoData.files
-.map(f => `File: ${f.path}\n${f.content}`)
+.map(f => `File:${f.path}\n${f.content}`)
 .join("\n\n");
 
-const prompt = `
-Analyze this repository.
+try{
 
+const response = await openai.responses.create({
+model:"gpt-4.1-mini",
+input:`
+Analyze this GitHub project.
+
+Code:
 ${code}
 
 Return JSON:
@@ -21,26 +26,31 @@ Return JSON:
 "purpose":"",
 "system_type":"",
 "architecture_complexity":"",
-"core_modules":[]
+"modules":[]
 }
-`;
-
-const response = await openai.responses.create({
-model:"gpt-4.1-mini",
-input:prompt
+`
 });
 
-const text = response.output?.[0]?.content?.[0]?.text || "";
+const text = response.output_text;
 
-try{
-return JSON.parse(text);
-}catch{
-return {
-purpose:"Software Project",
-system_type:"Application",
-architecture_complexity:"Intermediate",
-core_modules:[]
+const parsed = JSON.parse(text);
+
+return{
+purpose: parsed.purpose || "Software system",
+system_type: parsed.system_type || "Application",
+architecture_complexity: parsed.architecture_complexity || "Moderate",
+modules: parsed.modules || []
 };
+
+}catch{
+
+return{
+purpose:"Software project implementing backend logic and services",
+system_type:"Modular application",
+architecture_complexity:"Moderate",
+modules:[]
+};
+
 }
 
 }

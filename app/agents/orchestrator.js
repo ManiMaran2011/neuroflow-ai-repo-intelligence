@@ -11,19 +11,13 @@ const analysis = await codeAnalyzer(repoData);
 
 const skills = await skillExtractor(repoData);
 
-const score = await portfolioScorer(
-repoData,
-analysis,
-skills
-);
+const score = await portfolioScorer(repoData,analysis,skills);
 
 return{
-
 repo:repoData,
 analysis,
 skills,
 score
-
 };
 
 }

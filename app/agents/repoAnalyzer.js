@@ -1,54 +1,41 @@
 export async function repoAnalyzer(repoUrl){
 
-const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+const parts = repoUrl.replace("https://github.com/","").split("/");
+const owner = parts[0];
+const repo = parts[1];
 
-if(!match){
-throw new Error("Invalid GitHub URL");
-}
-
-const owner = match[1];
-const repo = match[2];
-
-const repoRes = await fetch(
-`https://api.github.com/repos/${owner}/${repo}`
-);
-
+const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
 const repoData = await repoRes.json();
 
-const treeRes = await fetch(
-`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`
-);
-
+const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`);
 const treeData = await treeRes.json();
 
-const codeFiles = treeData.tree
+const files = treeData.tree
+.filter(f => f.type === "blob")
 .filter(f =>
-f.type === "blob" &&
-(
 f.path.endsWith(".py") ||
 f.path.endsWith(".js") ||
 f.path.endsWith(".ts") ||
 f.path.endsWith(".tsx") ||
 f.path.endsWith(".ipynb")
 )
-)
-.slice(0,12);
+.slice(0,20);
 
-const files = [];
+const fileContents = [];
 
-for(const file of codeFiles){
+for(const file of files){
 
 try{
 
-const raw = await fetch(
-`https://raw.githubusercontent.com/${owner}/${repo}/main/${file.path}`
-);
+const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${file.path}`);
 
-const content = await raw.text();
+const data = await res.json();
 
-files.push({
+const content = Buffer.from(data.content,"base64").toString();
+
+fileContents.push({
 path:file.path,
-content:content.slice(0,2000)
+content
 });
 
 }catch{}
@@ -56,11 +43,9 @@ content:content.slice(0,2000)
 }
 
 return{
-
 name:repoData.name,
 description:repoData.description,
-files
-
+files:fileContents
 };
 
 }
