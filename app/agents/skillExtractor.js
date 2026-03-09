@@ -3,42 +3,64 @@ import OpenAI from "openai";
 export async function skillExtractor(repoData){
 
 const openai = new OpenAI({
-apiKey:process.env.OPENAI_API_KEY
+apiKey: process.env.OPENAI_API_KEY
 });
 
-const code = repoData.files
-.map(f=>f.content)
-.join("\n");
+const codeContext = repoData.files
+.map(f => `File: ${f.path}\n${f.content}`)
+.join("\n\n");
 
 try{
 
 const response = await openai.responses.create({
 model:"gpt-4.1-mini",
 input:`
-Identify the main developer technologies used in this repository.
+You are a senior software engineer.
 
-Code:
-${code}
+Analyze this GitHub repository code and list the main technologies and developer skills used.
 
-Return a comma separated list.
+Codebase:
+${codeContext}
 
-Example:
-Python, FastAPI, REST APIs, Async Programming
+Return ONLY the skills as a list.
+
+Example output:
+
+Python
+FastAPI
+REST APIs
+OpenAI API
+Async Programming
+Vector Databases
 `
 });
 
-const text = response.output_text;
+const text = response.output_text || "";
+
+/* parse both commas and line breaks */
 
 const skills = text
-.split(",")
-.map(s=>s.trim())
-.filter(Boolean);
+.split(/[\n,]/)
+.map(s => s.trim())
+.filter(s => s.length > 0);
 
-if(skills.length > 0) return skills;
+/* remove duplicates */
 
-}catch{}
+const uniqueSkills = [...new Set(skills)];
 
-return[
+if(uniqueSkills.length > 0){
+return uniqueSkills.slice(0,10);
+}
+
+}catch(err){
+
+console.log("Skill extraction error:",err);
+
+}
+
+/* fallback if AI fails */
+
+return [
 "Software Development",
 "Backend Development",
 "API Development"
