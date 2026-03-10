@@ -6,54 +6,77 @@ const openai = new OpenAI({
 apiKey:process.env.OPENAI_API_KEY
 });
 
+let result;
+
 try{
 
 const response = await openai.responses.create({
 model:"gpt-4.1-mini",
 input:`
-A developer built this project.
+Evaluate a developer project.
 
 Purpose:
 ${analysis.purpose}
 
-Skills detected:
+Skills:
 ${skills.join(", ")}
-
-Evaluate the developer.
 
 Return JSON:
 
 {
 "difficulty_level":"Beginner | Intermediate | Advanced",
-"recommended_roles":[
-"AI Engineer",
-"Backend Developer"
-],
-"insight":"Explain what this project shows about the developer"
+"recommended_roles":["roles"],
+"insight":"short evaluation"
 }
 `
 });
 
 let text = response.output_text || "{}";
 
-let parsed;
-
 try{
-parsed = JSON.parse(text);
+result = JSON.parse(text);
 }catch{
-parsed = {};
+result = {};
 }
-
-return parsed;
 
 }catch(e){
 
-return{
-difficulty_level:"Intermediate",
-recommended_roles:["Software Engineer"],
-insight:"Project demonstrates practical development ability."
-};
+result = {};
 
 }
+
+/* FALLBACKS */
+
+if(!result.difficulty_level){
+
+if(skills.length > 5) result.difficulty_level = "Advanced";
+else if(skills.length > 2) result.difficulty_level = "Intermediate";
+else result.difficulty_level = "Beginner";
+
+}
+
+if(!result.recommended_roles || result.recommended_roles.length === 0){
+
+const roles = [];
+
+if(skills.includes("Python")) roles.push("Backend Developer");
+if(skills.includes("JavaScript")) roles.push("Full Stack Developer");
+if(skills.includes("React")) roles.push("Frontend Developer");
+if(skills.includes("OpenAI API")) roles.push("AI Engineer");
+
+if(roles.length === 0) roles.push("Software Engineer");
+
+result.recommended_roles = roles;
+
+}
+
+if(!result.insight){
+
+result.insight =
+"This project demonstrates software development skills and system design capabilities.";
+
+}
+
+return result;
 
 }
