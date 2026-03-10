@@ -2,38 +2,44 @@
 
 import { useState, useEffect } from "react";
 
-export default function Home(){
+export default function Home() {
 
-const [repo,setRepo] = useState("");
-const [result,setResult] = useState(null);
-const [loading,setLoading] = useState(false);
+const [repo, setRepo] = useState("");
+const [result, setResult] = useState(null);
+const [loading, setLoading] = useState(false);
 
-async function analyze(){
+async function analyze() {
 
-if(!repo) return;
+if (!repo) return;
 
 setLoading(true);
 setResult(null);
 
-const res = await fetch("/api/evaluate",{
-method:"POST",
-headers:{ "Content-Type":"application/json"},
-body:JSON.stringify({repo})
+try {
+
+const res = await fetch("/api/evaluate", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ repo })
 });
 
 const data = await res.json();
 
 setResult(data);
-setLoading(false);
 
+} catch (err) {
+console.error(err);
 }
 
-return(
+setLoading(false);
+}
+
+return (
 
 <div className="min-h-screen bg-black text-white relative overflow-hidden">
 
-<NeuralGrid/>
-<Particles/>
+<NeuralGrid />
+<Particles />
 
 <div className="relative z-10 max-w-6xl mx-auto p-10">
 
@@ -45,7 +51,7 @@ Neuroflow Repo Analyzer
 
 <input
 value={repo}
-onChange={e=>setRepo(e.target.value)}
+onChange={(e) => setRepo(e.target.value)}
 placeholder="Paste GitHub repository URL..."
 className="flex-1 p-4 bg-gray-900 border border-cyan-500 rounded-lg focus:ring-2 focus:ring-cyan-400"
 />
@@ -61,8 +67,8 @@ Analyze
 
 {loading && (
 <>
-<AgentGraph/>
-<AgentTimeline/>
+<AgentGraph />
+<AgentTimeline />
 </>
 )}
 
@@ -72,9 +78,9 @@ Analyze
 
 <Card title="AI Project Analysis">
 
-<p><b>Purpose:</b> {result.analysis.purpose}</p>
-<p><b>System Type:</b> {result.analysis.system_type}</p>
-<p><b>Complexity:</b> {result.analysis.architecture_complexity}</p>
+<p><b>Purpose:</b> {result.analysis?.purpose}</p>
+<p><b>System Type:</b> {result.analysis?.system_type}</p>
+<p><b>Complexity:</b> {result.analysis?.architecture_complexity}</p>
 
 </Card>
 
@@ -82,14 +88,17 @@ Analyze
 
 <div className="flex flex-wrap gap-2">
 
-{result.skills.map((s,i)=>(
+{result.skills?.length
+? result.skills.map((s, i) => (
 <span
 key={i}
 className="px-3 py-1 bg-cyan-900/60 border border-cyan-500 rounded-full text-sm"
 >
 {s}
 </span>
-))}
+))
+: <span className="text-gray-400">No technologies detected</span>
+}
 
 </div>
 
@@ -99,9 +108,12 @@ className="px-3 py-1 bg-cyan-900/60 border border-cyan-500 rounded-full text-sm"
 
 <ul>
 
-{result.analysis.core_modules.map((m,i)=>(
+{result.analysis?.core_modules?.length
+? result.analysis.core_modules.map((m, i) => (
 <li key={i}>📦 {m}</li>
-))}
+))
+: <li>No modules detected</li>
+}
 
 </ul>
 
@@ -109,18 +121,21 @@ className="px-3 py-1 bg-cyan-900/60 border border-cyan-500 rounded-full text-sm"
 
 <Card title="Developer Insights">
 
-<p><b>Difficulty:</b> {result.score.difficulty_level}</p>
+<p><b>Difficulty:</b> {result.score?.difficulty_level}</p>
 
-<ul className="mt-2">
+<ul>
 
-{result.score.recommended_roles.map((r,i)=>(
+{result.score?.recommended_roles?.length
+? result.score.recommended_roles.map((r, i) => (
 <li key={i}>• {r}</li>
-))}
+))
+: <li>No role suggestions</li>
+}
 
 </ul>
 
 <p className="mt-3 text-gray-300">
-{result.score.insight}
+{result.score?.insight}
 </p>
 
 </Card>
@@ -128,7 +143,7 @@ className="px-3 py-1 bg-cyan-900/60 border border-cyan-500 rounded-full text-sm"
 <Card title="AI Architecture Insight">
 
 <p className="text-gray-300">
-{result.analysis.architecture_insight}
+{result.analysis?.architecture_insight}
 </p>
 
 </Card>
@@ -142,14 +157,13 @@ className="px-3 py-1 bg-cyan-900/60 border border-cyan-500 rounded-full text-sm"
 </div>
 
 );
-
 }
 
-/* Cards */
+/* CARD COMPONENT */
 
-function Card({title,children}){
+function Card({ title, children }) {
 
-return(
+return (
 
 <div className="
 bg-gradient-to-br
@@ -172,71 +186,66 @@ transition
 </div>
 
 );
-
 }
 
-/* Background grid */
+/* GRID BACKGROUND */
 
-function NeuralGrid(){
+function NeuralGrid() {
 
-return(
+return (
 
-<div className="absolute inset-0 opacity-25">
+<div className="absolute inset-0 opacity-25 pointer-events-none">
 
 <div className="w-full h-full bg-[radial-gradient(circle,rgba(0,255,255,0.2)_1px,transparent_1px)] [background-size:40px_40px]"></div>
 
 </div>
 
 );
-
 }
 
-/* Floating particles */
+/* FLOATING PARTICLES */
 
-function Particles(){
+function Particles() {
 
-const [dots,setDots] = useState([]);
+const [dots, setDots] = useState([]);
 
-useEffect(()=>{
+useEffect(() => {
 
 const arr = [];
 
-for(let i=0;i<40;i++){
-
+for (let i = 0; i < 40; i++) {
 arr.push({
-x:Math.random()*window.innerWidth,
-y:Math.random()*window.innerHeight
+x: Math.random() * window.innerWidth,
+y: Math.random() * window.innerHeight
 });
-
 }
 
 setDots(arr);
 
-},[]);
+}, []);
 
-return(
+return (
 
 <div className="absolute inset-0 pointer-events-none">
 
-{dots.map((d,i)=>(
+{dots.map((d, i) => (
 <div
 key={i}
 className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-pulse"
-style={{left:d.x,top:d.y}}
+style={{ left: d.x, top: d.y }}
 ></div>
 ))}
 
 </div>
 
 );
-
 }
 
-/* Agent timeline */
+/* AI AGENT TIMELINE */
 
-function AgentTimeline(){
+function AgentTimeline() {
 
-return(
+return (
 
 <div className="mb-10 border border-cyan-500 p-6 rounded-lg bg-black/60">
 
@@ -259,29 +268,28 @@ AI Agents Processing
 </div>
 
 );
-
 }
 
-/* Agent graph with neural signals */
+/* NEURAL AGENT GRAPH */
 
-function AgentGraph(){
+function AgentGraph() {
 
 const nodes = [
-{ id:"Planner", x:200, y:60 },
-{ id:"Repo", x:100, y:150 },
-{ id:"Code", x:300, y:150 },
-{ id:"Skills", x:120, y:250 },
-{ id:"Portfolio", x:280, y:250 }
+{ id: "Planner", x: 200, y: 60 },
+{ id: "Repo", x: 100, y: 150 },
+{ id: "Code", x: 300, y: 150 },
+{ id: "Skills", x: 120, y: 250 },
+{ id: "Portfolio", x: 280, y: 250 }
 ];
 
 const edges = [
-["Planner","Repo"],
-["Planner","Code"],
-["Repo","Skills"],
-["Code","Portfolio"]
+["Planner", "Repo"],
+["Planner", "Code"],
+["Repo", "Skills"],
+["Code", "Portfolio"]
 ];
 
-return(
+return (
 
 <div className="mb-10 border border-cyan-500 rounded-lg p-6 bg-black/60">
 
@@ -291,12 +299,12 @@ Neural Agent Network
 
 <svg width="400" height="300">
 
-{edges.map((e,i)=>{
+{edges.map((e, i) => {
 
-const a = nodes.find(n=>n.id===e[0]);
-const b = nodes.find(n=>n.id===e[1]);
+const a = nodes.find(n => n.id === e[0]);
+const b = nodes.find(n => n.id === e[1]);
 
-return(
+return (
 
 <g key={i}>
 
@@ -325,7 +333,7 @@ path={`M ${a.x} ${a.y} L ${b.x} ${b.y}`}
 
 })}
 
-{nodes.map((n,i)=>(
+{nodes.map((n, i) => (
 
 <g key={i}>
 
@@ -339,7 +347,7 @@ className="animate-pulse"
 
 <text
 x={n.x}
-y={n.y+30}
+y={n.y + 30}
 textAnchor="middle"
 fill="white"
 fontSize="12"
@@ -356,5 +364,4 @@ fontSize="12"
 </div>
 
 );
-
 }
