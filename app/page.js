@@ -5,22 +5,15 @@ import { useState, useEffect } from "react";
 export default function Home(){
 
 const [repo,setRepo] = useState("");
-const [loading,setLoading] = useState(false);
-const [status,setStatus] = useState("");
 const [result,setResult] = useState(null);
+const [loading,setLoading] = useState(false);
 
-async function analyzeRepo(){
+async function analyze(){
 
 if(!repo) return;
 
 setLoading(true);
 setResult(null);
-
-setStatus("🧠 Planner Agent thinking...");
-
-setTimeout(()=>setStatus("🔍 Fetching repository files..."),1000);
-setTimeout(()=>setStatus("⚙️ Extracting technologies..."),2000);
-setTimeout(()=>setStatus("📊 Evaluating architecture..."),3000);
 
 const res = await fetch("/api/evaluate",{
 method:"POST",
@@ -32,7 +25,6 @@ const data = await res.json();
 
 setResult(data);
 setLoading(false);
-setStatus("✅ Analysis complete");
 
 }
 
@@ -40,26 +32,27 @@ return(
 
 <div className="min-h-screen bg-black text-white relative overflow-hidden">
 
-<NeuralParticles/>
+<NeuralGrid/>
+<Particles/>
 
-<div className="max-w-6xl mx-auto p-10 relative z-10">
+<div className="relative z-10 max-w-6xl mx-auto p-10">
 
-<h1 className="text-4xl font-bold mb-6 text-cyan-400">
+<h1 className="text-5xl font-bold text-cyan-400 mb-8">
 Neuroflow Repo Analyzer
 </h1>
 
-<div className="flex gap-4 mb-8">
+<div className="flex gap-4 mb-10">
 
 <input
 value={repo}
-onChange={(e)=>setRepo(e.target.value)}
+onChange={e=>setRepo(e.target.value)}
 placeholder="Paste GitHub repository URL..."
-className="flex-1 p-3 bg-gray-900 border border-cyan-500 rounded"
+className="flex-1 p-4 bg-gray-900 border border-cyan-500 rounded-lg focus:ring-2 focus:ring-cyan-400"
 />
 
 <button
-onClick={analyzeRepo}
-className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black rounded font-semibold"
+onClick={analyze}
+className="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-lg"
 >
 Analyze
 </button>
@@ -68,8 +61,8 @@ Analyze
 
 {loading && (
 <>
-<div className="mb-4 text-cyan-300">{status}</div>
 <AgentGraph/>
+<AgentTimeline/>
 </>
 )}
 
@@ -79,57 +72,64 @@ Analyze
 
 <Card title="AI Project Analysis">
 
-<p><b>Purpose:</b> {result.analysis?.purpose}</p>
-<p><b>System Type:</b> {result.analysis?.system_type}</p>
-<p><b>Complexity:</b> {result.analysis?.architecture_complexity}</p>
+<p><b>Purpose:</b> {result.analysis.purpose}</p>
+<p><b>System Type:</b> {result.analysis.system_type}</p>
+<p><b>Complexity:</b> {result.analysis.architecture_complexity}</p>
 
 </Card>
 
 <Card title="Technologies & Skills">
 
-{result.skills?.length>0 ?(
+<div className="flex flex-wrap gap-2">
 
-<ul>
 {result.skills.map((s,i)=>(
-<li key={i}>{s}</li>
+<span
+key={i}
+className="px-3 py-1 bg-cyan-900/60 border border-cyan-500 rounded-full text-sm"
+>
+{s}
+</span>
 ))}
-</ul>
 
-):(
-
-<p>No technologies detected</p>
-
-)}
+</div>
 
 </Card>
 
 <Card title="Repository Architecture">
 
-{result.analysis?.core_modules?.length>0 ?(
-
 <ul>
+
 {result.analysis.core_modules.map((m,i)=>(
-<li key={i}>{m}</li>
+<li key={i}>📦 {m}</li>
 ))}
+
 </ul>
-
-):(
-
-<p>No modules detected</p>
-
-)}
 
 </Card>
 
 <Card title="Developer Insights">
 
-<p><b>Difficulty:</b> {result.score?.difficulty_level}</p>
+<p><b>Difficulty:</b> {result.score.difficulty_level}</p>
 
-<ul>
-{result.score?.recommended_roles?.map((r,i)=>(
-<li key={i}>{r}</li>
+<ul className="mt-2">
+
+{result.score.recommended_roles.map((r,i)=>(
+<li key={i}>• {r}</li>
 ))}
+
 </ul>
+
+<p className="mt-3 text-gray-300">
+{result.score.insight}
+</p>
+
+</Card>
+
+<Card title="AI Architecture Insight">
+
+<p className="text-gray-300">
+{result.analysis.architecture_insight}
+</p>
 
 </Card>
 
@@ -145,13 +145,25 @@ Analyze
 
 }
 
+/* Cards */
+
 function Card({title,children}){
 
 return(
 
-<div className="bg-gray-900/60 backdrop-blur border border-cyan-500 p-6 rounded-lg shadow-lg">
+<div className="
+bg-gradient-to-br
+from-gray-900
+to-black
+border border-cyan-500
+p-6
+rounded-xl
+shadow-[0_0_25px_rgba(0,255,255,0.15)]
+hover:shadow-[0_0_45px_rgba(0,255,255,0.35)]
+transition
+">
 
-<h2 className="text-xl font-semibold mb-4 text-cyan-400">
+<h2 className="text-xl text-cyan-400 mb-4">
 {title}
 </h2>
 
@@ -163,36 +175,55 @@ return(
 
 }
 
-function NeuralParticles(){
+/* Background grid */
 
-const [particles,setParticles] = useState([]);
+function NeuralGrid(){
+
+return(
+
+<div className="absolute inset-0 opacity-25">
+
+<div className="w-full h-full bg-[radial-gradient(circle,rgba(0,255,255,0.2)_1px,transparent_1px)] [background-size:40px_40px]"></div>
+
+</div>
+
+);
+
+}
+
+/* Floating particles */
+
+function Particles(){
+
+const [dots,setDots] = useState([]);
 
 useEffect(()=>{
 
-const p = Array.from({length:40}).map(()=>({
-x:Math.random()*100,
-y:Math.random()*100
-}));
+const arr = [];
 
-setParticles(p);
+for(let i=0;i<40;i++){
+
+arr.push({
+x:Math.random()*window.innerWidth,
+y:Math.random()*window.innerHeight
+});
+
+}
+
+setDots(arr);
 
 },[]);
 
 return(
 
-<div className="absolute inset-0 overflow-hidden pointer-events-none">
+<div className="absolute inset-0 pointer-events-none">
 
-{particles.map((p,i)=>(
-
+{dots.map((d,i)=>(
 <div
 key={i}
-className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-40"
-style={{
-left:`${p.x}%`,
-top:`${p.y}%`
-}}
-/>
-
+className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-pulse"
+style={{left:d.x,top:d.y}}
+></div>
 ))}
 
 </div>
@@ -201,29 +232,64 @@ top:`${p.y}%`
 
 }
 
+/* Agent timeline */
+
+function AgentTimeline(){
+
+return(
+
+<div className="mb-10 border border-cyan-500 p-6 rounded-lg bg-black/60">
+
+<h3 className="text-cyan-400 text-lg mb-4">
+AI Agents Processing
+</h3>
+
+<ul className="space-y-2 animate-pulse text-gray-300">
+
+<li>🧠 Planner Agent analyzing repository</li>
+<li>🔍 Repo Analyzer fetching repository data</li>
+<li>📂 Mapping repository structure</li>
+<li>⚙️ Code Analyzer evaluating architecture</li>
+<li>🧩 Extracting technologies & skills</li>
+<li>📊 Evaluating developer portfolio</li>
+<li>✅ AI analysis complete</li>
+
+</ul>
+
+</div>
+
+);
+
+}
+
+/* Agent graph with neural signals */
+
 function AgentGraph(){
 
 const nodes = [
-{ id:"planner",x:50,y:10,label:"Planner"},
-{ id:"repo",x:20,y:50,label:"Repo Agent"},
-{ id:"code",x:80,y:50,label:"Code Agent"},
-{ id:"skill",x:35,y:85,label:"Skill Agent"},
-{ id:"score",x:65,y:85,label:"Score Agent"}
+{ id:"Planner", x:200, y:60 },
+{ id:"Repo", x:100, y:150 },
+{ id:"Code", x:300, y:150 },
+{ id:"Skills", x:120, y:250 },
+{ id:"Portfolio", x:280, y:250 }
 ];
 
 const edges = [
-["planner","repo"],
-["planner","code"],
-["repo","skill"],
-["code","skill"],
-["skill","score"]
+["Planner","Repo"],
+["Planner","Code"],
+["Repo","Skills"],
+["Code","Portfolio"]
 ];
 
 return(
 
-<div className="relative h-64 border border-cyan-500 rounded mb-6 bg-black/40">
+<div className="mb-10 border border-cyan-500 rounded-lg p-6 bg-black/60">
 
-<svg className="absolute inset-0 w-full h-full">
+<h3 className="text-cyan-400 mb-4 text-lg">
+Neural Agent Network
+</h3>
+
+<svg width="400" height="300">
 
 {edges.map((e,i)=>{
 
@@ -235,15 +301,23 @@ return(
 <g key={i}>
 
 <line
-x1={`${a.x}%`}
-y1={`${a.y}%`}
-x2={`${b.x}%`}
-y2={`${b.y}%`}
+x1={a.x}
+y1={a.y}
+x2={b.x}
+y2={b.y}
 stroke="cyan"
-strokeOpacity="0.25"
+strokeWidth="2"
 />
 
-<DataPacket a={a} b={b}/>
+<circle r="4" fill="cyan">
+
+<animateMotion
+dur="2s"
+repeatCount="indefinite"
+path={`M ${a.x} ${a.y} L ${b.x} ${b.y}`}
+/>
+
+</circle>
 
 </g>
 
@@ -251,57 +325,35 @@ strokeOpacity="0.25"
 
 })}
 
-</svg>
-
 {nodes.map((n,i)=>(
 
-<div
-key={i}
-className="absolute bg-cyan-500 text-black text-xs px-2 py-1 rounded animate-pulse"
-style={{
-left:`${n.x}%`,
-top:`${n.y}%`,
-transform:"translate(-50%,-50%)"
-}}
+<g key={i}>
+
+<circle
+cx={n.x}
+cy={n.y}
+r="15"
+fill="cyan"
+className="animate-pulse"
+/>
+
+<text
+x={n.x}
+y={n.y+30}
+textAnchor="middle"
+fill="white"
+fontSize="12"
 >
-{n.label}
-</div>
+{n.id}
+</text>
+
+</g>
 
 ))}
 
+</svg>
+
 </div>
-
-);
-
-}
-
-function DataPacket({a,b}){
-
-const [t,setT] = useState(0);
-
-useEffect(()=>{
-
-const interval = setInterval(()=>{
-
-setT(v=> (v+0.02)%1);
-
-},50);
-
-return ()=>clearInterval(interval);
-
-},[]);
-
-const x = a.x + (b.x-a.x)*t;
-const y = a.y + (b.y-a.y)*t;
-
-return(
-
-<circle
-cx={`${x}%`}
-cy={`${y}%`}
-r="3"
-fill="cyan"
-/>
 
 );
 

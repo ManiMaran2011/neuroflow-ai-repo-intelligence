@@ -1,36 +1,59 @@
+import OpenAI from "openai";
+
 export async function portfolioScorer(repoData,analysis,skills){
 
-let difficulty = "Beginner";
+const openai = new OpenAI({
+apiKey:process.env.OPENAI_API_KEY
+});
 
-if(skills.length >= 4) difficulty = "Intermediate";
-if(skills.length >= 7) difficulty = "Advanced";
+try{
 
-const roles = [];
+const response = await openai.responses.create({
+model:"gpt-4.1-mini",
+input:`
+A developer built this project.
 
-if(skills.includes("Python")) roles.push("Backend Developer");
-if(skills.includes("JavaScript")) roles.push("Full Stack Developer");
-if(skills.includes("Agent Architecture")) roles.push("AI Engineer");
-if(skills.includes("OpenAI API")) roles.push("LLM Engineer");
+Purpose:
+${analysis.purpose}
 
-if(roles.length === 0){
+Skills detected:
+${skills.join(", ")}
 
-roles.push("Software Engineer");
+Evaluate the developer.
 
+Return JSON:
+
+{
+"difficulty_level":"Beginner | Intermediate | Advanced",
+"recommended_roles":[
+"AI Engineer",
+"Backend Developer"
+],
+"insight":"Explain what this project shows about the developer"
+}
+`
+});
+
+let text = response.output_text || "{}";
+
+let parsed;
+
+try{
+parsed = JSON.parse(text);
+}catch{
+parsed = {};
 }
 
+return parsed;
+
+}catch(e){
+
 return{
-
-difficulty_level:difficulty,
-
-recommended_roles:roles,
-
-improvement_suggestions:[
-"Add detailed documentation",
-"Include architecture diagrams",
-"Add unit tests",
-"Provide deployment instructions"
-]
-
+difficulty_level:"Intermediate",
+recommended_roles:["Software Engineer"],
+insight:"Project demonstrates practical development ability."
 };
+
+}
 
 }

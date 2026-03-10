@@ -1,41 +1,51 @@
+import OpenAI from "openai";
+
 export async function skillExtractor(repoData){
 
-const skills = new Set();
-
-repoData.files.forEach(file => {
-
-const path = file.path.toLowerCase();
-const code = file.content.toLowerCase();
-
-/* language detection */
-
-if(path.endsWith(".py")) skills.add("Python");
-if(path.endsWith(".js")) skills.add("JavaScript");
-if(path.endsWith(".ts")) skills.add("TypeScript");
-
-/* framework detection */
-
-if(code.includes("openai")) skills.add("OpenAI API");
-if(code.includes("requests")) skills.add("HTTP APIs");
-if(code.includes("googleapiclient")) skills.add("Google APIs");
-if(code.includes("telegram")) skills.add("Telegram Bot API");
-
-/* architecture detection */
-
-if(code.includes("baseagent")) skills.add("Agent Architecture");
-if(code.includes("async")) skills.add("Async Programming");
-if(code.includes("registry")) skills.add("Plugin Architecture");
-
+const openai = new OpenAI({
+apiKey:process.env.OPENAI_API_KEY
 });
 
-/* fallback */
+const repoTree = repoData.files.map(f=>f.path).join("\n");
 
-if(skills.size === 0){
+try{
 
-skills.add("Software Development");
+const response = await openai.responses.create({
+model:"gpt-4.1-mini",
+input:`
+Analyze this GitHub repository and identify the technologies and developer skills used.
 
+Repository files:
+${repoTree}
+
+Return JSON:
+
+{
+"skills":[
+"Python",
+"Async Programming",
+"API Development"
+]
+}
+`
+});
+
+let text = response.output_text || "{}";
+
+let parsed;
+
+try{
+parsed = JSON.parse(text);
+}catch{
+parsed = {};
 }
 
-return Array.from(skills).slice(0,10);
+return parsed.skills || [];
+
+}catch(e){
+
+return ["Software Development"];
+
+}
 
 }
