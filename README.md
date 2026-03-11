@@ -1,36 +1,151 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+NeuroFlow AI – GitHub Repository Analyzer
 
-## Getting Started
+AI-powered system that analyzes public GitHub repositories and generates intelligent insights about the project, including summaries, detected technologies, and structural understanding of the codebase.
 
-First, run the development server:
+Overview
 
-```bash
+NeuroFlow AI Repo Analyzer is designed to help developers, recruiters, and researchers quickly understand a GitHub repository without manually reading through the entire codebase.
+
+By simply providing a public GitHub repository URL, the system analyzes the repository structure and generates AI-powered insights such as:
+
+Project summary
+
+Technology stack detection
+
+Repository structure understanding
+
+Key project insights
+
+This tool demonstrates how AI can assist in automated software analysis and developer productivity.
+
+Live Demo
+
+https://neuroflow-ai-repo-analyzer.vercel.app/
+
+Features
+
+Analyze any public GitHub repository
+
+AI-generated project summary
+
+Automatic technology stack detection
+
+Repository structure analysis
+
+Clean and minimal UI
+
+Real-time analysis results
+
+Tech Stack
+
+Frontend
+
+Next.js
+
+React
+
+Tailwind CSS
+
+Backend / AI
+
+OpenAI API
+
+Deployment
+
+Vercel
+
+How It Works
+
+User enters a public GitHub repository URL.
+
+The system fetches repository data from GitHub.
+
+The repository structure and files are processed.
+
+AI analyzes the repository contents.
+
+A structured analysis is generated and displayed to the user.
+
+Installation
+
+Clone the repository
+
+git clone https://github.com/yourusername/neuroflow-ai-repo-analyzer.git
+
+Navigate to the project directory
+
+cd neuroflow-ai-repo-analyzer
+
+Install dependencies
+
+npm install
+
+Run the development server
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open your browser and visit
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Environment Variables
 
-## Learn More
+Create a .env.local file in the root directory and add your API key.
 
-To learn more about Next.js, take a look at the following resources:
+OPENAI_API_KEY=your_openai_api_key
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open the application.
 
-## Deploy on Vercel
+Paste a public GitHub repository URL.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Click Analyze Repository.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+View the AI-generated insights.
+
+Example Use Cases
+
+Quickly understand unfamiliar GitHub projects
+
+Evaluate open-source repositories
+
+Assist recruiters in assessing repositories
+
+Help developers explore large codebases
+
+Educational tool for learning repository structure
+
+Future Improvements
+
+Code quality analysis
+
+Security vulnerability detection
+
+Dependency analysis
+
+Contributor insights
+
+Repository comparison
+
+Export analysis as PDF
+
+Contributing
+
+Contributions are welcome.
+
+If you'd like to improve the project:
+
+Fork the repository
+
+Create a new branch
+
+Commit your changes
+
+Submit a pull request
+
+Author
+
+ManiMaran
+
+AI Developer focused on building intelligent systems and AI-powered developer tools.
